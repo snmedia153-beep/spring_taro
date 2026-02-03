@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<nav th:fragment="headerFragment" class="navbar navbar-expand-lg navbar-dark sticky-top">
+    <div class="container">
+        <a class="navbar-brand fs-3" href="/">✨ Mystic Tarot</a>
+        <div class="d-flex align-items-center">
+            <div class="position-relative me-4">
+                <i class="fa-solid fa-bell fs-4 text-light" id="notif-btn" style="cursor:pointer;"></i>
+                <span id="notif-count" class="badge rounded-pill bg-danger notification-badge">0</span>
+            </div>
+
+            <th:block sec:authorize="isAnonymous()">
+                <a href="/login" class="btn btn-outline-light btn-sm me-2">로그인</a>
+                <a href="/signup" class="btn btn-gold btn-sm" style="background-color: #e0b115; color: black; font-weight: bold;">회원가입</a>
+            </th:block>
+
+            <th:block sec:authorize="isAuthenticated()">
+                <a href="/mypage" class="btn btn-outline-gold btn-sm me-2" style="color: #e0b115; border-color: #e0b115;">내 정보</a>
+                <form th:action="@{/logout}" method="post" class="d-inline">
+                    <button type="submit" class="btn btn-outline-light btn-sm">로그아웃</button>
+                </form>
+            </th:block>
+        </div>
+    </div>
+</nav>
+
+<footer th:fragment="footerFragment" class="mt-5 py-4 border-top border-secondary text-center" style="background-color: #05050a; color: #888;">
+    <div class="container">
+        <p class="small text-secondary mb-0">&copy; 2026 <strong>SN Media</strong>. All rights reserved.</p>
+        <div class="mt-2">
+            <a href="/terms" class="text-secondary small me-3 text-decoration-none">이용약관</a>
+            <a href="/privacy" class="text-secondary small text-decoration-none">개인정보처리방침</a>
+        </div>
+    </div>
+</footer>
+
+</html>

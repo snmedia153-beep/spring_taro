@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mystic Tarot | 당신의 운명을 읽어보세요</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://js.tosspayments.com/v2/standard"></script>
+
+    <link rel="stylesheet" type="text/css" href="/css/style.css" />
+</head>
+<body>
+
+<div th:replace="~{fragments/common :: headerFragment}"></div>
+
+<header class="hero text-center">
+    <div class="container">
+        <h1 class="display-3 mb-3">당신의 미래를 비추는 등불</h1>
+        <p class="lead mb-4">운명은 정해진 것이 아니라 선택하는 것입니다. 오늘 당신의 카드를 뽑아보세요.</p>
+        <button class="btn btn-gold btn-lg px-5" onclick="location.href='#services'">상담 시작하기</button>
+    </div>
+</header>
+
+<main class="container my-5">
+    <div class="row">
+        <section class="col-lg-8" id="services">
+            <h2 class="mb-4"><i class="fa-solid fa-hat-wizard"></i> Tarot Readings</h2>
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <div class="card tarot-card h-100 text-light">
+                        <img src="/images/main_ban1.jpg" class="card-img-top" alt="오늘의 운세">
+                        <div class="card-body">
+                            <h5 class="card-title text-gold fw-bold">오늘의 한 장 타로</h5>
+                            <p class="card-text text-secondary small">당신의 하루를 관통하는 핵심 메시지를 확인하세요.</p>
+                            <div class="d-flex justify-content-between align-items-center mt-3">
+                                <span class="fs-5 fw-bold text-warning">1,000원</span>
+                                <button class="btn btn-gold btn-sm" onclick="reqPayment('오늘의 한 장 타로', 1000)">예약 및 결제</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card tarot-card h-100 text-light">
+                        <img src="/images/main_ban2.jpg" class="card-img-top" alt="연애운">
+                        <div class="card-body">
+                            <h5 class="card-title text-gold fw-bold">심층 연애운 상담 (30분)</h5>
+                            <p class="card-text text-secondary small">상대방의 속마음과 향후 3개월간의 흐름을 읽어드립니다.</p>
+                            <div class="d-flex justify-content-between align-items-center mt-3">
+                                <span class="fs-5 fw-bold text-warning">30,000원</span>
+                                <button class="btn btn-gold btn-sm" onclick="reqPayment('심층 연애운 상담', 30000)">예약 및 결제</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <aside class="col-lg-4">
+            <div class="p-4 rounded shadow-sm" style="background-color: var(--card-bg); border: 1px solid #222;">
+                <h4 class="mb-3 border-bottom pb-2"><i class="fa-solid fa-feather"></i> Community</h4>
+                <ul class="list-unstyled board-list">
+                    <li th:each="post : ${latestPosts}" class="mb-2 text-truncate">
+                        <a th:href="@{/{id}(id=${post.id})}" class="text-decoration-none text-light hover-gold">
+                            <i class="fa-solid fa-caret-right me-1 text-gold small"></i>
+                            <span th:text="${post.boardTitle}">게시글 제목이 출력됩니다.</span>
+                        </a>
+                    </li>
+                    <li th:if="${#lists.isEmpty(latestPosts)}" class="text-secondary small py-3 text-center">
+                        새로운 운명의 기록이 없습니다.
+                    </li>
+                </ul>
+                <button class="btn btn-outline-secondary btn-sm w-100 mt-3" onclick="location.href='/list'">게시판 더보기</button>
+            </div>
+        </aside>
+    </div>
+</main>
+
+<div th:replace="~{fragments/common :: footerFragment}"></div>
+
+<div id="notification-toast" class="toast align-items-center text-white bg-dark border-gold border" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="d-flex">
+        <div class="toast-body">
+            <i class="fa-solid fa-star text-warning me-2"></i> <span id="toast-message"></span>
+        </div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Thymeleaf를 통해 로그인 여부를 자바스크립트 변수로 저장
+    const isAuthenticated = [[${#authorization.expression('isAuthenticated()')}]];
+
+    async function reqPayment(orderName, amount) {
+        // 1. 로그인 체크
+        if (!isAuthenticated) {
+            if (confirm("로그인 후 이용 가능합니다. 로그인하시겠습니까?")) {
+                location.href = "/login"; // 확인 클릭 시 로그인 페이지로 이동
+            }
+            return; // 로그인하지 않았으므로 결제 로직 진행 안 함
+        }
+
+        // 2. 로그인된 경우 기존 결제 로직 실행
+        // (이전에 작성된 토스페이먼츠 결제창 호출 코드)
+        const clientKey = '[[${apiKey}]]'; // 실제 내 키로 변경
+        const customerKey = generateRandomString();
+        const tossPayments = TossPayments(clientKey);
+        // 회원 결제
+        // @docs https://docs.tosspayments.com/sdk/v2/js#tosspaymentspayment
+        const payment = tossPayments.payment({
+          customerKey,
+        });
+
+        await payment.requestPayment({
+            method: "CARD", // 카드 및 간편결제
+            amount: {
+                currency: "KRW",
+                value: amount,
+            },
+            orderId: generateRandomString(),
+            orderName: orderName,
+            successUrl: window.location.origin + "/payment/success", // 결제 요청이 성공하면 리다이렉트되는 URL
+            failUrl: window.location.origin + "/payment/fail", // 결제 요청이 실패하면 리다이렉트되는 URL
+            customerEmail: "customer123@gmail.com",
+            customerName: "김토스",
+            // 가상계좌 안내, 퀵계좌이체 휴대폰 번호 자동 완성에 사용되는 값입니다. 필요하다면 주석을 해제해 주세요.
+            // customerMobilePhone: "01012341234",
+            card: {
+              useEscrow: false,
+              flowMode: "DEFAULT",
+              useCardPoint: false,
+              useAppCardOnly: false,
+            },
+        });
+    }
+
+    async function requestBillingAuth() {
+      await payment.requestBillingAuth({
+        method: "CARD", // 자동결제(빌링)은 카드만 지원합니다
+        successUrl: window.location.origin + "/payment/success?customerKey=${customerKey}&", // 요청이 성공하면 리다이렉트되는 URL
+        failUrl: window.location.origin + "/fail",
+        customerEmail: "customer123@gmail.com", // 요청이 실패하면 리다이렉트되는 URL
+        customerName: "김토스",
+      });
+    }
+    /*
+    // 1. 토스 페이먼츠 결제 연동 (Client Key 필요)
+    const clientKey = "test_ck_D5GePWvyJnrK0W0k6q8gLzN97Eoq"; // 실제 키로 교체 필요
+    const customerKey = generateRandomString();
+    const tossPayments = TossPayments(clientKey);
+    // 브랜드페이 객체 생성
+    const brandpay = tossPayments.brandpay({
+        customerKey,
+        redirectUrl: "http://localhost:8080/callback-auth",
+    });
+
+    async function reqPayment(orderName, amount) {
+        await brandpay.requestPayment({
+          amount: {
+            currency: "KRW",
+            value: amount,
+          },
+          orderId: generateRandomString(), // 고유 주문번호
+          orderName: orderName,
+          successUrl: window.location.origin + `/success/customerKey=${customerKey}&`, // 결제 요청이 성공하면 리다이렉트되는 URL
+          failUrl: window.location.origin + "/fail", // 결제 요청이 실패하면 리다이렉트되는 URL
+          customerEmail: "customer123@gmail.com",
+          customerName: "김토스",
+        });
+    }
+    */
+
+    // 2. SSE 실시간 알림 수신 설정 (백엔드 SseEmitter와 연동)
+    // const eventSource = new EventSource('/api/notifications/subscribe');
+    // eventSource.onmessage = (event) => { showNotification(event.data); };
+
+    function showNotification(message) {
+        document.getElementById('toast-message').innerText = message;
+        const toast = new bootstrap.Toast(document.getElementById('notification-toast'));
+        toast.show();
+
+        const countBadge = document.getElementById('notif-count');
+        countBadge.innerText = parseInt(countBadge.innerText) + 1;
+    }
+    function generateRandomString() {
+      return window.btoa(Math.random()).slice(0, 20);
+    }
+    // 테스트용 알림 (3초 후 발생)
+    setTimeout(() => {
+        showNotification("당신을 위한 새로운 운명의 메시지가 도착했습니다.");
+    }, 3000);
+</script>
+</body>
+</html>
