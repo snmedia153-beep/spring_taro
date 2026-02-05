@@ -7,6 +7,9 @@
 
 > **서비스 배포 주소:** [https://spring-taro.onrender.com/](https://spring-taro.onrender.com/)
 
+![Video-Getsitecontrol (1)](https://github.com/user-attachments/assets/1b7fbca6-77c6-4a3d-a86e-5b580f825aab)
+
+
 ## 🚀 프로젝트 개요
 실시간 타로 상담 예약과 운세 기록을 위한 커뮤니티 플랫폼입니다. 기존 PHP 기반의 개발 경험을 바탕으로 **Java/Spring Boot**로 기술 스택을 확장하며 고도화하였습니다. 
 특히 클라우드 네이티브 환경(Render)의 한계를 극복하기 위해 클라우드 플레어의 오브젝트 스토리지(R2)와 AWS 외부 RDS(Mysql)를 활용한 무상태(Stateless) 아키텍처를 구축하는 데 집중했습니다.
