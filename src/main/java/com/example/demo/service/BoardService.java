@@ -12,8 +12,14 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 @Service
 @RequiredArgsConstructor
 public class BoardService {
@@ -94,7 +100,25 @@ public class BoardService {
     public List<BoardDTO> findAll() {
         return boardRepository.findAll();
     }
+    public Page<BoardDTO> paging(Pageable pageable) {
+        int page = pageable.getPageNumber();
+        int pageLimit = pageable.getPageSize();
 
+        // 1. MyBatis용 시작 위치(offset) 계산
+        int pagingStart = page * pageLimit;
+        Map<String, Integer> pagingParams = new HashMap<>();
+        pagingParams.put("start", pagingStart);
+        pagingParams.put("limit", pageLimit);
+
+        // 2. 현재 페이지에 해당하는 글 목록 조회
+        List<BoardDTO> boardDTOList = boardRepository.pagingList(pagingParams);
+
+        // 3. 전체 글 개수 조회 (페이징 버튼 생성을 위해 필요)
+        int boardCount = boardRepository.boardCount();
+
+        // 4. Spring Data의 Page 객체로 변환하여 반환
+        return new PageImpl<>(boardDTOList, pageable, boardCount);
+    }
     public void updateHits(Long id) {
         boardRepository.updateHits(id);
     }

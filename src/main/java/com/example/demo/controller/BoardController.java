@@ -6,6 +6,8 @@ import com.example.demo.dto.BoardFileDTO;
 import com.example.demo.service.BoardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.*;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -41,13 +43,20 @@ public class BoardController {
     }
 
     @GetMapping("/list")
-    public String findAll(Model model) {
-        List<BoardDTO> boardDTOList = boardService.findAll();
-        model.addAttribute("boardList", boardDTOList);
-        System.out.println("boardDTOList = " + boardDTOList);
+    public String paging(@PageableDefault(page = 1, size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable,
+                         Model model) {
+        PageRequest pageRequest = PageRequest.of(pageable.getPageNumber() - 1, pageable.getPageSize(), pageable.getSort());
+        Page<BoardDTO> boardList = boardService.paging(pageRequest);
+        int blockLimit = 5; // 한 번에 보여줄 페이지 개수
+        int startPage = (((int)(Math.ceil((double)pageable.getPageNumber() / blockLimit))) - 1) * blockLimit + 1;
+        int endPage = ((startPage + blockLimit - 1) < boardList.getTotalPages()) ? startPage + blockLimit - 1 : boardList.getTotalPages();
+        long totalElements = boardList.getTotalElements();
+        model.addAttribute("boardCount", totalElements);
+        model.addAttribute("boardList", boardList);
+        model.addAttribute("startPage", startPage);
+        model.addAttribute("endPage", endPage);
         return "list";
     }
-
     // /10, /1
     @Value("${CLOUD_PUBLIC_URL}")
     private String CLOUD_PUBLIC_URL;

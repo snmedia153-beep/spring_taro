@@ -9,6 +9,62 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <link rel="stylesheet" type="text/css" href="/css/style.css" />
+    <style>
+        /* 페이징 네비게이션 컨테이너 */
+        .pagination-container {
+            margin-top: 0rem;
+            display: flex;
+            justify-content: center;
+        }
+
+        .pagination {
+            display: flex;
+            list-style: none;
+            padding: 0;
+            gap: 8px;
+        }
+
+        /* 기본 페이지 번호 스타일 */
+        .page-item .page-link {
+            background-color: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(212, 175, 55, 0.3); /* 연한 금색 테두리 */
+            color: #d4af37; /* 금색 글자 */
+            padding: 8px 16px;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            font-family: 'Playfair Display', serif;
+        }
+
+        /* 마우스 호버 시 */
+        .page-item .page-link:hover {
+            background-color: #d4af37;
+            color: #1a1a1a;
+            box-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+            transform: translateY(-2px);
+        }
+
+        /* 현재 활성화된 페이지 (Active) */
+        .page-item.active .page-link {
+            background-color: #d4af37;
+            border-color: #d4af37;
+            color: #1a1a1a;
+            font-weight: bold;
+        }
+
+        /* 비활성화된 버튼 (이전/다음 없을 때) */
+        .page-item.disabled .page-link {
+            background-color: transparent;
+            border-color: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.3);
+            cursor: not-allowed;
+        }
+
+        /* 이전/다음 아이콘 스타일 */
+        .page-link i {
+            font-size: 0.8rem;
+        }
+    </style>
 </head>
 <body>
 <div th:replace="~{fragments/common :: headerFragment}"></div>
@@ -21,12 +77,45 @@
 
     <div class="board-container">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <span class="text-secondary small">기록된 운명: <span th:text="${boardList.size()}">0</span>건</span>
+            <span class="text-secondary small">기록된 운명: <span th:text="${boardCount}">0</span>건</span>
             <a href="/save" class="btn btn-gold btn-sm">
                 <i class="fa-solid fa-pen-nib me-2"></i>새로운 이야기 쓰기
             </a>
         </div>
 
+        <nav class="pagination-container" aria-label="Page navigation">
+            <ul class="pagination">
+                <li class="page-item" th:classappend="${boardList.first} ? 'disabled'">
+                    <a class="page-link" th:href="@{/list(page=1)}" aria-label="First">
+                        <i class="fa-solid fa-angles-left"></i>
+                    </a>
+                </li>
+
+                <li class="page-item" th:classappend="${boardList.first} ? 'disabled'">
+                    <a class="page-link" th:href="@{/list(page=${boardList.number})}" aria-label="Previous">
+                        <i class="fa-solid fa-chevron-left"></i>
+                    </a>
+                </li>
+
+                <li th:each="page: ${#numbers.sequence(startPage, endPage)}"
+                    th:classappend="${page == boardList.number + 1} ? 'active' : ''"
+                    class="page-item">
+                    <a class="page-link" th:text="${page}" th:href="@{/list(page=${page})}">1</a>
+                </li>
+
+                <li class="page-item" th:classappend="${boardList.last} ? 'disabled'">
+                    <a class="page-link" th:href="@{/list(page=${boardList.number + 2})}" aria-label="Next">
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </a>
+                </li>
+
+                <li class="page-item" th:classappend="${boardList.last} ? 'disabled'">
+                    <a class="page-link" th:href="@{/list(page=${boardList.totalPages})}" aria-label="Last">
+                        <i class="fa-solid fa-angles-right"></i>
+                    </a>
+                </li>
+            </ul>
+        </nav>
         <div class="table-responsive">
             <table class="table table-hover">
                 <thead class="text-center">

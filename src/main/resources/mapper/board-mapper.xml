@@ -25,6 +25,16 @@
         select id, boardTitle, boardWriter, boardHits, date_format(createdAt, "%Y-%m-%d") as createdAt
         from board_table order by id desc
     </select>
+    <select id="pagingList" parameterType="java.util.Map" resultType="boardDTO">
+        SELECT id, boardTitle, boardWriter, createdAt, boardHits, fileAttached, member_id as memberId
+        FROM board_table
+        ORDER BY id DESC
+        LIMIT #{start}, #{limit}
+    </select>
+
+    <select id="boardCount" resultType="Integer">
+        SELECT COUNT(id) FROM board_table
+    </select>
     <update id="updateHits" parameterType="Long">
         update board_table set boardHits=boardHits+1 where id=#{id}
     </update>
