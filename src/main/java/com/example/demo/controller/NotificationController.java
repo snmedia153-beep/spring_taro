@@ -22,6 +22,6 @@ public class NotificationController {
     @GetMapping(value = "/subscribe", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter subscribe(@AuthenticationPrincipal PrincipalDetails principalDetails) {
         // principalDetails에서 실제 Member 객체를 꺼내서 ID를 전달합니다.
-        return notificationService.subscribe(principalDetails.getMember().getId());
+        return notificationService.subscribe(principalDetails.getMember().getEmail());
     }
 }

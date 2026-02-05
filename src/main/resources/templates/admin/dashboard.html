@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Mystic Tarot | 관리자 센터</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --sidebar-bg: #1a1a2e; --text-gold: #e0b115; }
+        body { background-color: #0f0f1b; color: #e0e0e0; font-family: 'Noto Sans KR', sans-serif; }
+        .sidebar { height: 100vh; background-color: var(--sidebar-bg); border-right: 1px solid var(--text-gold); }
+        .nav-link { color: #d1d1d1; margin-bottom: 10px; transition: 0.3s; }
+        .nav-link:hover, .nav-link.active { color: var(--text-gold); background: rgba(224, 177, 21, 0.1); }
+        .stat-card { background: var(--sidebar-bg); border: 1px solid #333; border-radius: 12px; padding: 25px; height: 100%; transition: transform 0.3s; }
+        .stat-card:hover { transform: translateY(-5px); border-color: var(--text-gold); }
+        .stat-value { font-size: 1.8rem; color: var(--text-gold); font-weight: bold; margin-top: 10px; }
+        .text-gold { color: var(--text-gold) !important; }
+    </style>
+</head>
+<body>
+<div class="container-fluid">
+    <div class="row">
+        <nav class="col-md-2 d-none d-md-block sidebar p-3">
+            <h4 class="text-gold mb-4"><i class="fa-solid fa-eye"></i> Admin Center</h4>
+            <ul class="nav flex-column">
+                <li class="nav-item"><a class="nav-link active" href="/admin/dashboard"><i class="fa-solid fa-chart-line me-2"></i> 대시보드</a></li>
+                <li class="nav-item"><a class="nav-link" href="/admin/members"><i class="fa-solid fa-users me-2"></i> 회원 관리</a></li>
+                <li class="nav-item"><a class="nav-link" href="/admin/payments"><i class="fa-solid fa-credit-card me-2"></i> 결제 현황</a></li>
+                <li class="nav-item"><hr class="border-secondary"></li>
+                <li class="nav-item"><a class="nav-link" href="/"><i class="fa-solid fa-house me-2"></i> 메인으로</a></li>
+            </ul>
+        </nav>
+
+        <main class="col-md-10 p-4">
+            <h2 class="mb-4 fw-bold"><i class="fa-solid fa-wand-sparkles text-gold"></i> 운명의 통찰 (Dashboard)</h2>
+
+            <div class="row g-4">
+                <div class="col-md-3">
+                    <div class="stat-card shadow-sm">
+                        <div class="text-secondary small"><i class="fa-solid fa-coins me-1"></i> 총 매출 합계</div>
+                        <div class="stat-value">
+                            ₩ <span th:text="${#numbers.formatInteger(totalRevenue, 0, 'COMMA')}">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="stat-card shadow-sm">
+                        <div class="text-secondary small"><i class="fa-solid fa-receipt me-1"></i> 총 결제 건수</div>
+                        <div class="stat-value"><span th:text="${paymentCount}">0</span> <small class="fs-6 fw-normal text-light">건</small></div>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="stat-card shadow-sm">
+                        <div class="text-secondary small"><i class="fa-solid fa-user-group me-1"></i> 총 가입 회원</div>
+                        <div class="stat-value"><span th:text="${totalMembers}">0</span> <small class="fs-6 fw-normal text-light">명</small></div>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="stat-card shadow-sm">
+                        <div class="text-secondary small"><i class="fa-solid fa-pen-nib me-1"></i> 누적 게시글</div>
+                        <div class="stat-value"><span th:text="${totalBoards}">0</span> <small class="fs-6 fw-normal text-light">개</small></div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+        <div class="row mt-5">
+            <div class="col-12">
+                <div class="stat-card shadow-sm">
+                    <h5 class="text-gold mb-4"><i class="fa-solid fa-chart-area me-2"></i> 월별 매출 추이 (최근 6개월)</h5>
+                    <div style="height: 300px;">
+                        <canvas id="salesChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+        <script th:inline="javascript">
+            /*<![CDATA[*/
+            document.addEventListener('DOMContentLoaded', function() {
+                // 컨트롤러에서 넘어온 데이터 받기
+                const labels = [[${months}]];
+                const dataValues = [[${salesData}]];
+
+                const ctx = document.getElementById('salesChart').getContext('2d');
+
+                new Chart(ctx, {
+                    type: 'line', // 선 그래프
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: '월간 매출 (₩)',
+                            data: dataValues,
+                            borderColor: '#e0b115', // 골드 색상
+                            backgroundColor: 'rgba(224, 177, 21, 0.1)',
+                            borderWidth: 3,
+                            pointBackgroundColor: '#e0b115',
+                            pointRadius: 5,
+                            fill: true,
+                            tension: 0.4 // 곡선 부드럽게
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                labels: { color: '#d1d1d1' }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                                ticks: { color: '#d1d1d1' }
+                            },
+                            x: {
+                                grid: { display: false },
+                                ticks: { color: '#d1d1d1' }
+                            }
+                        }
+                    }
+                });
+            });
+            /*]]>*/
+        </script>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

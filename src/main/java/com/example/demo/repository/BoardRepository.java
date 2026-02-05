@@ -22,6 +22,9 @@ public class BoardRepository {
     public List<BoardDTO> findAll() {
         return sql.selectList("Board.findAll");
     }
+    public Long count() {
+        return sql.selectOne("Board.count");
+    }
 
     public void updateHits(Long id) {
         sql.update("Board.updateHits", id);
@@ -42,7 +45,9 @@ public class BoardRepository {
     public void saveFile(BoardFileDTO boardFileDTO) {
         sql.insert("Board.saveFile", boardFileDTO);
     }
-
+    public void deleteFileByStoredName(String storedFileName) {
+        sql.delete("Board.deleteFileByStoredName", storedFileName);
+    }
     public List<BoardFileDTO> findFile(Long id) {
         return sql.selectList("Board.findFile", id);
     }

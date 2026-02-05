@@ -10,7 +10,6 @@ public class Payment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
     private String paymentKey; // 토스 결제 고유 키
     private String orderId;    // 내 시스템의 주문 ID
     private String orderName;  // 상품명
@@ -18,6 +17,11 @@ public class Payment {
     private String method;     // 결제 수단 (카드 등)
     private String status;     // 상태 (READY, DONE, CANCELLED 등)
 
+    @Column(name = "tarot_status")
+    private String tarotStatus = "READY"; // 기본값 설정 (READY: 미사용, USED: 사용완료)
+    public void setTarotStatus(String tarotStatus) {
+        this.tarotStatus = tarotStatus;
+    }
     @ManyToOne(fetch = FetchType.LAZY) // 다대일 관계 설정
     @JoinColumn(name = "member_id")   // DB의 member_id 컬럼과 매핑
     private Member member;            // 결제한 회원 정보

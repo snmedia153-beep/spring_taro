@@ -1,0 +1,10 @@
+<div class="row g-4">
+    <div class="col-md-4" th:each="history : ${historyList}">
+        <div class="stat-card border-gold h-100">
+            <img th:src="${history.cardImage}" class="img-fluid mb-2">
+            <div th:text="${#temporals.format(history.createDate, 'yyyy.MM.dd')}">날짜</div>
+            <h5 class="text-gold" th:text="${history.cardName}">카드명</h5>
+            <p class="small text-secondary th:text="${history.interpretation}">해석 요약...</p>
+        </div>
+    </div>
+</div>

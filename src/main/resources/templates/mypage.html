@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mystic Tarot | 내 운명 관리</title>
+    <link rel="icon" type="image/x-icon" th:href="@{/favicon.ico}">
+    <link rel="shortcut icon" type="image/x-icon" th:href="@{/favicon.ico}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -39,6 +41,8 @@
 
     <div class="row">
         <div class="col-lg-4">
+            <div th:if="${message}" class="alert alert-success mt-3" th:text="${message}"></div>
+            <div th:if="${error}" class="alert alert-danger mt-3" th:text="${error}"></div>
             <div class="mypage-card">
                 <h4 class="section-title">암호 변경</h4>
                 <form th:action="@{/api/member/update-password}" method="post">
@@ -62,6 +66,7 @@
         <div class="col-lg-8">
             <div class="mypage-card">
                 <h4 class="section-title">최근 결제 내역</h4>
+
                 <div class="table-responsive">
                     <table class="table table-hover">
                         <thead>
@@ -70,20 +75,56 @@
                             <th>상담 상품명</th>
                             <th>금액</th>
                             <th>상태</th>
+                            <th>액션</th>
                         </tr>
                         </thead>
                         <tbody>
                         <tr th:each="payment : ${paymentList}" class="text-center align-middle">
-                            <td class="small text-secondary" th:text="${payment.createdAt}">2026.02.03</td>
+                            <td class="small text-secondary" th:text="${payment.createdAt != null ? #temporals.format(payment.createdAt, 'MM-dd HH:mm') : '-'}">2026.02.03</td>
                             <td class="text-start ps-4" th:text="${payment.orderName}">심층 연애운 상담 (30분)</td>
                             <td th:text="${#numbers.formatInteger(payment.amount, 3, 'COMMA') + '원'}">30,000원</td>
                             <td><span class="status-paid"><i class="fa-solid fa-circle-check"></i> 결제완료</span></td>
+                            <td>
+                                <button th:if="${(payment.status == 'DONE' or payment.status == 'PAID') and payment.tarotStatus != 'USED'}"
+                                        class="btn btn-gold btn-sm"
+                                        th:onclick="|showTarotModal('${payment.id}')|">
+                                    🔮 타로 받기
+                                </button>
+
+                                <button th:if="${payment.tarotStatus == 'USED'}"
+                                        class="btn btn-outline-info btn-sm"
+                                        th:onclick="|showHistoryModal('${payment.id}')|">
+                                    📜 결과 보기
+                                </button>
+
+                                <button th:if="${payment.status == 'READY'}"
+                                        class="btn btn-secondary btn-sm" disabled>
+                                    ⏳ 입금 대기
+                                </button>
+
+                                <span th:if="${payment.status == 'CANCELED'}" class="text-danger small">취소됨</span>
+                            </td>
                         </tr>
                         <tr th:if="${#lists.isEmpty(paymentList)}">
-                            <td colspan="4" class="py-5 text-center text-secondary small">기록된 결제 내역이 없습니다.</td>
+                            <td colspan="5" class="py-5 text-center text-secondary small">기록된 결제 내역이 없습니다.</td>
                         </tr>
                         </tbody>
                     </table>
+                </div>
+            </div>
+            <div class="mypage-card mt-4">
+                <h4 class="section-title">운명의 기록 (보관함)</h4>
+                <div class="row g-3">
+                    <div th:each="history : ${historyList}" class="col-md-3 text-center">
+                        <div class="p-2 border border-secondary rounded">
+                            <img th:src="${history.imagePath}" class="img-fluid rounded mb-2" style="max-height: 150px;">
+                            <div class="small text-gold" th:text="${history.cardName}">The Sun</div>
+                            <div class="extra-small text-secondary" th:text="${#temporals.format(history.createdAt, 'yyyy.MM.dd')}"></div>
+                        </div>
+                    </div>
+                    <div th:if="${#lists.isEmpty(historyList)}" class="text-center py-4 text-secondary">
+                        아직 기록된 운명이 없습니다.
+                    </div>
                 </div>
             </div>
         </div>
@@ -95,7 +136,92 @@
         <p class="small text-secondary mb-0">&copy; 2026 SN Media. All rights reserved.</p>
     </div>
 </footer>
+<div class="modal fade" id="tarotResultModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-light border-gold" style="border-radius: 20px;">
+            <div class="modal-body text-center p-5">
+                <div class="tarot-scene mb-4">
+                    <div class="tarot-card" id="flipCard">
+                        <div class="card-face card-front"></div>
+                        <div class="card-back">
+                            <img id="resultImg" src="" class="img-fluid rounded shadow-glow">
+                        </div>
+                    </div>
+                </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+                <h3 id="resultName" class="text-gold mt-3" style="display:none;"></h3>
+                <p id="resultDesc" class="text-secondary mt-2" style="display:none;"></p>
+
+                <button type="button" class="btn btn-outline-gold mt-4" data-bs-dismiss="modal" onclick="location.reload()">닫기</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+function showTarotModal(payId) {
+    // 1. 모달 띄우기 (초기화상태)
+    const modal = new bootstrap.Modal(document.getElementById('tarotResultModal'));
+    const flipCard = document.getElementById('flipCard');
+    flipCard.classList.remove('is-flipped'); // 초기화
+
+    // 2. 데이터 가져오기
+    fetch(`/api/tarot/today?paymentId=${payId}`)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('resultImg').src = data.imagePath;
+            document.getElementById('resultName').innerText = data.name;
+            document.getElementById('resultDesc').innerText = data.interpretation;
+
+            modal.show();
+
+            // 3. 잠시 후 자동으로 카드 뒤집기 연출
+            setTimeout(() => {
+                flipCard.classList.add('is-flipped');
+
+                // 4. 1초 뒤 텍스트 나타나기
+                setTimeout(() => {
+                    document.getElementById('resultName').style.display = 'block';
+                    document.getElementById('resultDesc').style.display = 'block';
+                }, 1000);
+            }, 500);
+        })
+        .catch(err => alert("이미 사용하셨거나 오류가 발생했습니다."));
+}
+function showHistoryModal(payId) {
+    const modalElement = document.getElementById('tarotResultModal');
+    const modal = new bootstrap.Modal(modalElement);
+    const flipCard = document.getElementById('flipCard');
+
+    // 1. 초기 상태 설정: 기록 보기이므로 이미 뒤집힌 상태(결과 화면)로 시작
+    flipCard.classList.add('is-flipped');
+    document.getElementById('resultName').style.display = 'block';
+    document.getElementById('resultDesc').style.display = 'block';
+
+    // 2. 서버에서 과거 기록 데이터 가져오기
+    fetch(`/api/tarot/history/${payId}`)
+        .then(response => {
+            if (!response.ok) throw new Error("기록을 찾을 수 없습니다.");
+            return response.json();
+        })
+        .then(data => {
+            // 데이터 매핑
+            document.getElementById('resultImg').src = data.imagePath;
+            document.getElementById('resultName').innerText = data.name;
+            document.getElementById('resultDesc').innerText = data.interpretation;
+
+            // 모달 표시
+            modal.show();
+        })
+        .catch(err => alert(err.message));
+}
+// 모달이 닫힐 때 실행되는 이벤트
+document.getElementById('tarotResultModal').addEventListener('hidden.bs.modal', function () {
+    const flipCard = document.getElementById('flipCard');
+    flipCard.classList.remove('is-flipped');
+    document.getElementById('resultName').style.display = 'none';
+    document.getElementById('resultDesc').style.display = 'none';
+    document.getElementById('resultImg').src = '';
+});
+</script>
 </body>
 </html>

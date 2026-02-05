@@ -10,31 +10,28 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 public class NotificationService {
     // 사용자 ID별로 연결된 SseEmitter를 저장 (동시성 고려)
-    private final Map<Long, SseEmitter> emitters = new ConcurrentHashMap<>();
+    private final Map<String, SseEmitter> emitters = new ConcurrentHashMap<>();
 
-    public SseEmitter subscribe(Long userId) {
-        SseEmitter emitter = new SseEmitter(60L * 1000 * 60); // 1시간 타임아웃
-        emitters.put(userId, emitter);
+    public SseEmitter subscribe(String email) { // ✅ 파라미터 타입 변경
+        SseEmitter emitter = new SseEmitter(60L * 1000 * 60);
+        emitters.put(email, emitter); // ✅ String 키 사용
 
-        // 연결 종료 시 처리
-        emitter.onCompletion(() -> emitters.remove(userId));
-        emitter.onTimeout(() -> emitters.remove(userId));
+        emitter.onCompletion(() -> emitters.remove(email));
+        emitter.onTimeout(() -> emitters.remove(email));
 
-        // 초기 연결 시 더미 데이터 전송 (503 에러 방지)
         try {
             emitter.send(SseEmitter.event().name("connect").data("Connected!"));
         } catch (IOException e) {
-            emitters.remove(userId);
+            emitters.remove(email);
         }
         return emitter;
     }
-
-    public void send(Long userId, String message) {
-        if (emitters.containsKey(userId)) {
+    public void sendNotification(String email, String message) {
+        if (emitters.containsKey(email)) {
             try {
-                emitters.get(userId).send(SseEmitter.event().name("notification").data(message));
+                emitters.get(email).send(SseEmitter.event().name("notification").data(message));
             } catch (IOException e) {
-                emitters.remove(userId);
+                emitters.remove(email);
             }
         }
     }

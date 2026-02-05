@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <title>Mystic Tarot | 회원가입</title>
+    <link rel="icon" type="image/x-icon" th:href="@{/favicon.ico}">
+    <link rel="shortcut icon" type="image/x-icon" th:href="@{/favicon.ico}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -13,6 +15,37 @@
 
         .divider { border-top: 1px solid #333; margin: 25px 0; position: relative; }
         .divider span { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--card-bg); padding: 0 15px; color: #666; font-size: 0.8rem; }
+
+        /* --- 모달 다크 테마 커스텀 --- */
+        .modal-content {
+            background-color: var(--card-bg);
+            border: 1px solid var(--gold-accent);
+            color: #d1d1d1;
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.8);
+        }
+
+        .modal-header {
+            border-bottom: 1px solid rgba(224, 177, 21, 0.3);
+        }
+
+        .modal-footer {
+            border-top: 1px solid rgba(224, 177, 21, 0.1);
+        }
+
+        .modal-title { color: var(--gold-accent); font-weight: 700; }
+
+        /* 스크롤바 커스텀 */
+        .modal-body::-webkit-scrollbar { width: 8px; }
+        .modal-body::-webkit-scrollbar-track { background: var(--dark-bg); }
+        .modal-body::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+        .modal-body::-webkit-scrollbar-thumb:hover { background: var(--gold-accent); }
+
+        .terms-link {
+            color: var(--gold-accent);
+            text-decoration: underline;
+            cursor: pointer;
+            font-weight: 700;
+        }
     </style>
 </head>
 <body>
@@ -22,28 +55,34 @@
         <h2 class="signup-title"><i class="fa-solid fa-star-and-crescent"></i> Join Us</h2>
         <p class="text-center text-secondary mb-4 small">당신의 운명을 기록할 새로운 계정을 생성합니다.</p>
 
-        <form action="/api/auth/signup" method="post">
+        <form action="/api/auth/signup" method="post" id="signupForm">
             <div class="mb-3">
                 <label class="form-label">성함</label>
-                <input type="text" name="name" class="form-control" placeholder="성함을 입력하세요" required>
+                <input type="text" name="name" class="form-control bg-dark text-white border-secondary" placeholder="성함을 입력하세요" required>
             </div>
             <div class="mb-3">
-                <label class="form-label">이메일 주소</label>
-                <input type="email" name="email" class="form-control" placeholder="example@gmail.com" required>
+                <label for="email" class="form-label ">이메일 주소</label>
+                <div class="input-group">
+                    <input type="email" class="form-control bg-dark text-white border-secondary" placeholder="example@gmail.com" id="email" name="email" onblur="checkEmail()" required>
+                </div>
+                <small id="check-result" class="mt-2 d-block"></small>
             </div>
             <div class="mb-3">
                 <label class="form-label">비밀번호</label>
-                <input type="password" name="password" id="password" class="form-control" placeholder="8자 이상의 비밀번호" required>
+                <input type="password" name="password" id="password" class="form-control bg-dark text-white border-secondary" placeholder="8자 이상의 비밀번호" required>
             </div>
             <div class="mb-4">
                 <label class="form-label">비밀번호 확인</label>
-                <input type="password" id="confirmPassword" class="form-control" placeholder="다시 한번 입력하세요" required>
+                <input type="password" id="confirmPassword" class="form-control bg-dark text-white border-secondary" placeholder="다시 한번 입력하세요" required>
                 <div id="pw-error" class="text-danger small mt-1" style="display:none;">비밀번호가 일치하지 않습니다.</div>
             </div>
 
             <div class="mb-4 form-check">
-                <input type="checkbox" class="form-check-input" id="terms" required>
-                <label class="form-check-label small" for="terms">개인정보 수집 및 운명 열람 약관에 동의합니다.</label>
+                <input type="checkbox" class="form-check-input" id="terms" required disabled>
+                <label class="form-check-label small" for="terms">
+                    <span class="terms-link" data-bs-toggle="modal" data-bs-target="#privacyModal">개인정보 수집 및 운명 열람 약관</span>에 동의합니다.
+                </label>
+                <div id="terms-error" class="text-danger small mt-1" style="display:none;">약관을 읽고 동의해 주세요.</div>
             </div>
 
             <button type="submit" class="btn btn-gold">비밀의 서약 완료</button>
@@ -56,16 +95,90 @@
         </div>
     </div>
 </main>
+<div class="modal fade" id="privacyModal" tabindex="-1" aria-labelledby="privacyModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="privacyModalLabel" style="color: var(--gold-accent)">개인정보 처리방침 및 약관</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body small">
+                <h6>제 1조 (목적)</h6>
+                <p>본 약관은 Mystic Tarot 서비스의 이용 조건 및 절차, 이용자와 당사의 권리, 의무, 책임사항을 규정함을 목적으로 합니다.</p>
+                <h6>제 2조 (개인정보 수집)</h6>
+                <p>당사는 서비스 제공을 위해 이메일, 성명 등 최소한의 정보를 수집하며, 이는 운명 상담 기록 및 결제 확인 용도로만 사용됩니다.</p>
+                <h6>제 3조 (데이터 보관)</h6>
+                <p>수집된 상담 기록은 보안 서버에 암호화되어 보관되며, 본인 요청 시 즉시 파기됩니다.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">닫기</button>
+                <button type="button" class="btn btn-gold" id="agreeBtn">내용 확인 및 동의</button>
+            </div>
+        </div>
+    </div>
+</div>
 <div th:replace="~{fragments/common :: footerFragment}"></div>
+
 <script>
-    // 간단한 비밀번호 일치 확인 스크립트
-    document.querySelector('form').onsubmit = function(e) {
+    // 1. 이메일 중복 체크
+    function checkEmail() {
+        const email = document.getElementById("email").value;
+        const checkResult = document.getElementById("check-result");
+        if (email.length === 0) { checkResult.innerText = ""; return; }
+
+        fetch("/member/email-check", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: "memberEmail=" + encodeURIComponent(email)
+        })
+        .then(res => res.text())
+        .then(data => {
+            if (data === "ok") {
+                checkResult.style.color = "#00ff00";
+                checkResult.innerText = "사용 가능한 이메일입니다.";
+            } else {
+                checkResult.style.color = "#ff4d4d";
+                checkResult.innerText = "이미 사용 중인 이메일입니다.";
+            }
+        });
+    }
+
+    // 2. 모달 동의 버튼 클릭 시 체크박스 활성화
+    document.getElementById('agreeBtn').onclick = function() {
+        const termsCheckbox = document.getElementById('terms');
+        termsCheckbox.disabled = false;
+        termsCheckbox.checked = true;
+
+        // 모달 닫기
+        const modal = bootstrap.Modal.getInstance(document.getElementById('privacyModal'));
+        modal.hide();
+    };
+
+    // 3. 폼 제출 전 최종 유효성 검사
+    document.getElementById('signupForm').onsubmit = function(e) {
         const pw = document.getElementById('password').value;
         const confirmPw = document.getElementById('confirmPassword').value;
+        const terms = document.getElementById('terms');
+
+        let isValid = true;
+
+        // 비밀번호 확인
         if (pw !== confirmPw) {
-            e.preventDefault();
             document.getElementById('pw-error').style.display = 'block';
+            isValid = false;
+        } else {
+            document.getElementById('pw-error').style.display = 'none';
         }
+
+        // 약관 동의 확인
+        if (!terms.checked) {
+            document.getElementById('terms-error').style.display = 'block';
+            isValid = false;
+        } else {
+            document.getElementById('terms-error').style.display = 'none';
+        }
+
+        if (!isValid) e.preventDefault();
     };
 </script>
 </body>

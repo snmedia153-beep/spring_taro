@@ -114,7 +114,7 @@ public class PaymentController {
                 paymentRepository.save(payment);
 
                 // 4. 실시간 알림 발송 (로그인한 회원 ID로 발송)
-                notificationService.send(currentMember.getId(),
+                notificationService.sendNotification(currentMember.getEmail(),
                         "🔮 [" + payment.getOrderName() + "] 운명의 계약이 성사되었습니다!");
 
                 return ResponseEntity.ok("Success");

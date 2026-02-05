@@ -3,6 +3,14 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="Board">
+    <delete id="deleteFileByStoredName" parameterType="String">
+        DELETE FROM board_file_table
+        WHERE storedFileName = #{storedFileName}
+    </delete>
+    <select id="count" resultType="long">
+        SELECT COUNT(*)
+        FROM board_table
+    </select>
     <select id="findLatest" resultType="board">
         SELECT id, boardTitle, boardWriter, createdAt
         FROM board_table
@@ -10,8 +18,8 @@
         LIMIT 4
     </select>
     <insert id="save" parameterType="board" useGeneratedKeys="true" keyProperty="id">
-        insert into board_table(boardTitle, boardWriter, boardPass, boardContents, fileAttached)
-        values(#{boardTitle}, #{boardWriter}, #{boardPass}, #{boardContents}, #{fileAttached})
+        insert into board_table(boardTitle, boardWriter, boardPass, boardContents, member_id,fileAttached)
+        values(#{boardTitle}, #{boardWriter}, #{boardPass}, #{boardContents}, #{memberId},#{fileAttached})
     </insert>
     <select id="findAll" resultType="board">
         select id, boardTitle, boardWriter, boardHits, date_format(createdAt, "%Y-%m-%d") as createdAt
@@ -22,11 +30,11 @@
     </update>
     <select id="findById" parameterType="Long" resultType="board">
         select id, boardTitle, boardWriter, boardPass, boardContents, boardHits,
-        date_format(createdAt, "%Y-%m-%d %H:%i:%s") as createdAt, fileAttached
+        date_format(createdAt, "%Y-%m-%d %H:%i:%s") as createdAt, fileAttached, member_id as memberId
         from board_table where id=#{id}
     </select>
-    <update id="update">
-        update board_table set boardTitle=#{boardTitle}, boardContents=#{boardContents} where id=#{id}
+    <update id="update" parameterType="boardDTO">
+        update board_table set boardTitle=#{boardTitle}, boardContents=#{boardContents}, fileAttached=#{fileAttached} where id=#{id}
     </update>
     <delete id="delete" parameterType="Long">
         delete from board_table where id=#{id}

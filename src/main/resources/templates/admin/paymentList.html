@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Mystic Tarot | 결제 현황</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --sidebar-bg: #1a1a2e; --text-gold: #e0b115; }
+        body { background-color: #0f0f1b; color: #e0e0e0; font-family: 'Noto Sans KR', sans-serif; }
+        .sidebar { height: 100vh; background-color: var(--sidebar-bg); border-right: 1px solid var(--text-gold); position: fixed; }
+        .nav-link { color: #d1d1d1; margin-bottom: 10px; transition: 0.3s; }
+        .nav-link:hover, .nav-link.active { color: var(--text-gold); background: rgba(224, 177, 21, 0.1); }
+        .main-content { margin-left: 16.666667%; }
+        .admin-table { background: var(--sidebar-bg); border: 1px solid #333; border-radius: 12px; overflow: hidden; }
+        .table { color: #d1d1d1; margin-bottom: 0; vertical-align: middle; text-align: center; }
+        .table thead { background: #0f0f1b; color: var(--text-gold); border-bottom: 2px solid var(--text-gold); }
+        .text-gold { color: var(--text-gold) !important; }
+        .border-gold { border: 1px solid var(--text-gold) !important; }
+
+        /* 상태별 배지 2글자 스타일 */
+        .badge-sm { padding: 5px 8px; font-size: 0.75rem; border-radius: 4px; font-weight: bold; }
+        .bg-done { background-color: #198754; color: white; }    /* 완료 */
+        .bg-ready { background-color: #ffc107; color: black; }   /* 대기 */
+        .bg-canceled { background-color: #dc3545; color: white; } /* 취소 */
+    </style>
+</head>
+<body>
+<div class="container-fluid">
+    <div class="row">
+        <nav class="col-md-2 d-none d-md-block sidebar p-3">
+            <h4 class="text-gold mb-4"><i class="fa-solid fa-eye"></i> Admin Center</h4>
+            <ul class="nav flex-column">
+                <li class="nav-item"><a class="nav-link" href="/admin/dashboard"><i class="fa-solid fa-chart-line me-2"></i> 대시보드</a></li>
+                <li class="nav-item"><a class="nav-link" href="/admin/members"><i class="fa-solid fa-users me-2"></i> 회원 관리</a></li>
+                <li class="nav-item"><a class="nav-link active" href="/admin/payments"><i class="fa-solid fa-credit-card me-2"></i> 결제 현황</a></li>
+                <li class="nav-item"><hr class="border-secondary"></li>
+                <li class="nav-item"><a class="nav-link" href="/"><i class="fa-solid fa-house me-2"></i> 메인으로</a></li>
+            </ul>
+        </nav>
+
+        <main class="col-md-10 p-4 main-content">
+            <h2 class="mb-4 fw-bold"><i class="fa-solid fa-receipt text-gold"></i> 복채 수납 명부 (결제 현황)</h2>
+
+            <div class="admin-table shadow-sm">
+                <table class="table table-hover">
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>주문명</th>
+                        <th>결제금액</th>
+                        <th>주문자</th>
+                        <th>상태</th>
+                        <th>일시</th>
+                        <th>주문번호</th>
+                        <th>관리</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="pay : ${payments}">
+                        <td th:text="${pay.id}">1</td>
+                        <td th:text="${pay.orderName}" class="text-start fw-bold">오늘의 한 장 타로</td>
+                        <td><span class="text-gold" th:text="${#numbers.formatInteger(pay.amount, 0, 'COMMA')}">1,000</span>원</td>
+                        <td>
+                            <span th:text="${pay.member.name}">홍길동</span><br>
+                            <small class="text-secondary" th:text="${pay.member.email}"></small>
+                        </td>
+                        <td>
+                            <span th:if="${pay.status == 'DONE' or pay.status == 'PAID'}" class="badge-sm bg-done">완료</span>
+                            <span th:if="${pay.status == 'READY'}" class="badge-sm bg-ready">대기</span>
+                            <span th:if="${pay.status == 'CANCELED'}" class="badge-sm bg-canceled">취소</span>
+                            <span th:if="${pay.status != 'DONE' and pay.status != 'PAID' and pay.status != 'READY' and pay.status != 'CANCELED'}"
+                                  class="badge-sm bg-secondary">미정</span>
+                        </td>
+                        <td th:text="${pay.createdAt != null ? #temporals.format(pay.createdAt, 'MM-dd HH:mm') : '-'}"></td>
+                        <td>
+                            <small class="text-secondary" style="font-size: 0.7rem;" th:text="${pay.orderId}">order_123</small>
+                        </td>
+                        <td>
+                            <button th:if="${pay.status == 'DONE' or pay.status == 'PAID'}"
+                                    class="btn btn-outline-danger btn-sm"
+                                    th:onclick="openCancelModal([[${pay.id}]], [[${pay.orderName}]])">
+                                취소
+                            </button>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(payments)}">
+                        <td colspan="8" class="text-center py-5 text-secondary">기록된 운명이 없습니다.</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+</div>
+
+<div class="modal fade" id="cancelModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark text-light border-gold">
+            <form action="/admin/payments/cancel" method="post">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title text-gold">결제 취소 승인</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="paymentId" id="modalPaymentId">
+                    <p id="modalOrderName" class="fw-bold"></p>
+                    <div class="mb-3">
+                        <label class="form-label">취소 사유</label>
+                        <select name="cancelReason" class="form-select bg-dark text-light border-secondary">
+                            <option value="고객 변심">고객 변심</option>
+                            <option value="서비스 불가">서비스 제공 불가</option>
+                            <option value="중복 결제">중복 결제</option>
+                            <option value="기타">기타</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+                    <button type="submit" class="btn btn-danger">취소 확정</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    function openCancelModal(id, name) {
+        document.getElementById('modalPaymentId').value = id;
+        document.getElementById('modalOrderName').innerText = "대상 주문: " + name;
+        new bootstrap.Modal(document.getElementById('cancelModal')).show();
+    }
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

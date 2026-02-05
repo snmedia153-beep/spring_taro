@@ -37,13 +37,12 @@
         <div class="detail-body" th:text="${board.boardContents}">
             여기에 본문 내용이 신비롭게 출력됩니다.
         </div>
-
         <div class="image-section" th:if="${board.fileAttached == 1}">
             <p class="text-gold small mb-3"><i class="fa-solid fa-images me-2"></i>첨부된 영상(이미지)</p>
             <div class="row g-4">
                 <div class="col-12 col-md-8 mx-auto" th:each="boardFile: ${boardFileList}">
                     <div class="img-wrapper shadow">
-                        <img th:src="@{|/upload/${boardFile.storedFileName}|}" class="attached-img" alt="첨부이미지">
+                        <img th:src="@{${fileurl} + '/' + ${boardFile.storedFileName}}" class="attached-img" alt="첨부이미지">
                     </div>
                 </div>
             </div>

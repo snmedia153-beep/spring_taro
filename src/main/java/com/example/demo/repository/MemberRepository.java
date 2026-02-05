@@ -8,7 +8,8 @@ import java.util.Optional;
 
 @Repository
 public interface MemberRepository extends JpaRepository<Member, Long> {
-
+    // 이메일 존재 여부 확인
+    //boolean existsByMemberEmail(String email);
     /**
      * 이메일로 회원 정보를 조회합니다.
      * @param email 가입 시 사용한 이메일

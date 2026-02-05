@@ -18,4 +18,5 @@ public class Member {
     private String email;
     private String password;
     private String role; // ROLE_USER, ROLE_ADMIN
+    private String create_date;
 }
