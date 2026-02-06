@@ -37,6 +37,7 @@ dependencies {
 	implementation 'io.awspring.cloud:spring-cloud-aws-starter-s3:3.1.1'
 	//image resizing library
 	implementation 'net.coobird:thumbnailator:0.4.20'
+	implementation 'org.apache.httpcomponents.client5:httpclient5'
 }
 
 tasks.named('test') {

@@ -2,7 +2,6 @@
 <html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <nav th:fragment="headerFragment" class="navbar navbar-expand-lg navbar-dark sticky-top">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
     <script th:inline="javascript">
         /*<![CDATA[*/
         // 1. 기본값 설정 (로그인 안 했을 때)
@@ -23,7 +22,37 @@
     <script th:inline="javascript">
         // 1. 알림 데이터를 담을 배열 (실제 SSE나 API로 받은 데이터를 여기 추가)
         let notifications = [];
+        async function checkUnreadNotifications() {
+            try {
+                // 우리 백엔드 API 호출 (파라미터로 이메일을 넘길 필요 없음)
+                const response = await fetch('/api/notifications/unread');
 
+                if (response.status === 200) {
+                    const data = await response.json();
+
+                    if (data && data.length > 0) {
+                        data.forEach(noti => {
+                            showNotification(noti.message);
+                            // 읽음 처리도 우리 서버 API 호출
+                            confirmReadAtServer(noti.id);
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error("알림 조회 실패:", error);
+            }
+        }
+
+        async function confirmReadAtServer(id) {
+            await fetch(`/api/notifications/read/${id}`, { method: 'POST' });
+        }
+
+        // 로그인 상태일 때만 실행
+        document.addEventListener('DOMContentLoaded', () => {
+            if (isAuthenticated) {
+                checkUnreadNotifications();
+            }
+        });
         // 2. 부트스트랩 팝오버 초기화 및 내용 설정
         document.addEventListener('DOMContentLoaded', function () {
             const notifBtn = document.getElementById('notif-btn');

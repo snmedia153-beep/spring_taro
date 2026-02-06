@@ -28,6 +28,7 @@ public class HomeController {
     }*/
     @Value("${TOSS_CKEY}") // application.yml이나 환경변수에 정의된 값
     private String apiKey;
+
     @GetMapping("/")
     public String index(Model model) {
         // MyBatis 레포지토리의 findLatest 메서드 호출
